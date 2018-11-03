@@ -54,7 +54,7 @@ data
 
 Extract features from audios. We extract 36 Mel-cepstral coefficients(MCEPs) and frame length is 512. The features are stored as npy and npz files. We also calculate the statistical characteristics for each speaker.
 
-```python
+```
 python preprocess.py --input_dir ./data/fourspeakers --output_dir ./data/processed --ispad True
 
 For simplicity use:
@@ -69,7 +69,7 @@ Note  that test set doesn’t need preprocess.
 
 We read npy files from ./data/processed to train and raw wav files from ./data/fourspeakers_test to randomly generate some converted samples during training.
 
-```python
+```
 python train.py --processed_dir ./data/processed --test_wav_dir ./data/fourspeakers_test
 
 For simplicity use:
