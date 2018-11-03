@@ -6,6 +6,8 @@ This is a tensorflow implementation of the paper: [StarGAN-VC: Non-parallel many
 
 In the experiment, we choose **four speakers** from vcc 2016 dataset.  We  move the corresponding folder(eg. SF1,SF2,TM1,TM2 from vcc2016 training set. ) to ./data/fourspeakers. Then we run preprocess.py to generate npy files and statistical characteristics for each speaker. And then we choose some test examples( from vcc2016 evaluation set)  and put them in ./data/fourspeaker_test. Now we can train our model.
 
+The converted examples are available in **converted directory**.
+
 ## Dependencies
 
 - Python 3.6 (or higher)
@@ -103,4 +105,4 @@ The network structure shown as follows:
 
 If you feel this repo is good, please  **star**  ! 
 
-Your encouragement is my biggest motivation!
+Your encouragement is my biggest motivation !
