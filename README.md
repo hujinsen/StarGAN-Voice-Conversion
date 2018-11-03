@@ -1,12 +1,12 @@
 ## StarGAN Voice Conversion
 
+----
+
 
 
 This is a tensorflow implementation of the paper: [StarGAN-VC: Non-parallel many-to-many voice conversion with star generative adversarial networks](https://arxiv.org/abs/1806.02169).
 
 In the experiment, we choose **four speakers** from vcc 2016 dataset.  We  move the corresponding folder(eg. SF1,SF2,TM1,TM2 from vcc2016 training set. ) to ./data/fourspeakers. Then we run preprocess.py to generate npy files and statistical characteristics for each speaker. And then we choose some test examples( from vcc2016 evaluation set)  and put them in ./data/fourspeaker_test. Now we can train our model.
-
-The converted examples are available in **converted directory**.
 
 ## Dependencies
 
@@ -24,6 +24,9 @@ The converted examples are available in **converted directory**.
 The following line will download the vcc 2016 dataset to the current directory and create ./data/fourspeakers and ./data/fourspeakers_test.
 
 ```
+python download.py --datasets vcc2016 --train_dir ./data/fourspeakers --test_dir ./data/fourspeakers_test
+
+For simplicity use:
 python download.py 
 ```
 
@@ -52,6 +55,9 @@ data
 Extract features from audios. We extract 36 Mel-cepstral coefficients(MCEPs) and frame length is 512. The features are stored as npy and npz files. We also calculate the statistical characteristics for each speaker.
 
 ```python
+python preprocess.py --input_dir ./data/fourspeakers --output_dir ./data/processed --ispad True
+
+For simplicity use:
 python preprocess.py
 ```
 
@@ -61,9 +67,12 @@ Note  that test set doesn’t need preprocess.
 
 #### Train
 
-We read npy files from ./data/processed to train and raw wav files from ./data/fourspeaker_test to randomly generate some converted samples during training.
+We read npy files from ./data/processed to train and raw wav files from ./data/fourspeakers_test to randomly generate some converted samples during training.
 
 ```python
+python train.py --processed_dir ./data/processed --test_wav_dir ./data/fourspeakers_test
+
+For simplicity use:
 python train.py
 ```
 
@@ -105,4 +114,4 @@ The network structure shown as follows:
 
 If you feel this repo is good, please  **star**  ! 
 
-Your encouragement is my biggest motivation !
+Your encouragement is my biggest motivation!
