@@ -178,7 +178,7 @@ if __name__ == "__main__":
     
     input_dir = './data/fourspeakers'
     output_dir = './data/processed'
-    ispad = False
+    ispad = True
    
 
     parser.add_argument('--input_dir', type = str, help = 'the direcotry contains data need to be processed', default = input_dir)
