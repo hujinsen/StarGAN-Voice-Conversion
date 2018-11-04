@@ -10,8 +10,8 @@ This is a tensorflow implementation of the paper: [StarGAN-VC: Non-parallel many
 
 - Python 3.6 (or higher)
 - tensorflow 1.7
-- librosa
-- pyworld
+- librosa 
+- pyworld 
 - tensorboard
 - scikit-learn
 
@@ -123,6 +123,6 @@ The network structure shown as follows:
 
 ---
 
-If you feel this repo is good, please  ==**star**==  ! 
+If you feel this repo is good, please  **star**  ! 
 
 Your encouragement is my biggest motivation!
