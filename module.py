@@ -57,10 +57,7 @@ def conv2d_layer(
     name = None):
    
     p = tf.constant([[0,0], [padding[0], padding[0]], [padding[1], padding[1]], [0,0]])
-    # print(f'pad shape: {p.shape.as_list()} {padding}')
     out = tf.pad(inputs, p, name=name+'conv2d_pad')
-    # print(f'inputs shape: {inputs.shape.as_list()}')
-    # print(f'after pad out shape: {out.shape.as_list()}')
 
     conv_layer = tf.layers.conv2d(
         inputs = out,
@@ -117,14 +114,11 @@ def downsample2d_block(
     name_prefix = 'downsample2d_block_'):
 
     h1 = conv2d_layer(inputs = inputs, filters = filters, kernel_size = kernel_size, strides = strides,padding=padding ,activation = None, name = name_prefix + 'h1_conv')
-    # print(f'h1----{h1.shape}')
     h1_norm = instance_norm_layer(inputs = h1, activation_fn = None, name = name_prefix + 'h1_norm')
     h1_gates = conv2d_layer(inputs = inputs, filters = filters, kernel_size = kernel_size, strides = strides,padding=padding, activation = None, name = name_prefix + 'h1_gates')
-    # print(f'h1-gates---{h1_gates.shape}')
     h1_norm_gates = instance_norm_layer(inputs = h1_gates, activation_fn = None, name = name_prefix + 'h1_norm_gates')
-    # print(f'h1-h1_norm_gates---{h1_norm_gates.shape}')
     h1_glu = gated_linear_layer(inputs = h1_norm, gates = h1_norm_gates, name = name_prefix + 'h1_glu')
-    # print(f'h1_glu---{h1_glu.shape}')
+   
     return h1_glu
 
 def upsample1d_block(
@@ -155,11 +149,9 @@ def upsample2d_block(
     strides,
     name_prefix = 'upsample2d_block_'):
     
-   
     # t1=tf.layers.Conv2DTranspose(filters,kernel_size,strides, padding='same',name=name_prefix+'conv1')(inputs)
     # t1 = tf.layers.batch_normalization()
 
-    
     
     t1 = tf.keras.layers.Conv2DTranspose(filters, kernel_size, strides, padding='same')(inputs)
     # t2 = tf.keras.layers.BatchNormalization()(t1)
@@ -188,85 +180,17 @@ def pixel_shuffler(inputs, shuffle_size = 2, name = None):
 
     return outputs
 
-# def generator_gatedcnn(inputs, reuse = False, scope_name = 'generator_gatedcnn'):
-
-#     # inputs has shape [batch_size, num_features, time]
-#     # we need to convert it to [batch_size, time, num_features] for 1D convolution
-#     inputs = tf.transpose(inputs, perm = [0, 2, 1], name = 'input_transpose')
-
-#     with tf.variable_scope(scope_name) as scope:
-#         # Discriminator would be reused in CycleGAN
-#         if reuse:
-#             scope.reuse_variables()
-#         else:
-#             assert scope.reuse is False
-
-#         h1 = conv1d_layer(inputs = inputs, filters = 128, kernel_size = 15, strides = 1, activation = None, name = 'h1_conv')
-#         h1_gates = conv1d_layer(inputs = inputs, filters = 128, kernel_size = 15, strides = 1, activation = None, name = 'h1_conv_gates')
-#         h1_glu = gated_linear_layer(inputs = h1, gates = h1_gates, name = 'h1_glu')
-
-#         # Downsample
-#         d1 = downsample1d_block(inputs = h1_glu, filters = 256, kernel_size = 5, strides = 2, name_prefix = 'downsample1d_block1_')
-#         d2 = downsample1d_block(inputs = d1, filters = 512, kernel_size = 5, strides = 2, name_prefix = 'downsample1d_block2_')
-
-#         # Residual blocks
-#         r1 = residual1d_block(inputs = d2, filters = 1024, kernel_size = 3, strides = 1, name_prefix = 'residual1d_block1_')
-#         r2 = residual1d_block(inputs = r1, filters = 1024, kernel_size = 3, strides = 1, name_prefix = 'residual1d_block2_')
-#         r3 = residual1d_block(inputs = r2, filters = 1024, kernel_size = 3, strides = 1, name_prefix = 'residual1d_block3_')
-#         r4 = residual1d_block(inputs = r3, filters = 1024, kernel_size = 3, strides = 1, name_prefix = 'residual1d_block4_')
-#         r5 = residual1d_block(inputs = r4, filters = 1024, kernel_size = 3, strides = 1, name_prefix = 'residual1d_block5_')
-#         r6 = residual1d_block(inputs = r5, filters = 1024, kernel_size = 3, strides = 1, name_prefix = 'residual1d_block6_')
-
-#         # Upsample
-#         u1 = upsample1d_block(inputs = r6, filters = 1024, kernel_size = 5, strides = 1, shuffle_size = 2, name_prefix = 'upsample1d_block1_')
-#         u2 = upsample1d_block(inputs = u1, filters = 512, kernel_size = 5, strides = 1, shuffle_size = 2, name_prefix = 'upsample1d_block2_')
-
-#         # Output
-#         o1 = conv1d_layer(inputs = u2, filters = 24, kernel_size = 15, strides = 1, activation = None, name = 'o1_conv')
-#         o2 = tf.transpose(o1, perm = [0, 2, 1], name = 'output_transpose')
-
-#     return o2
-    
-
-# def discriminator(inputs, reuse = False, scope_name = 'discriminator'):
-
-#     # inputs has shape [batch_size, num_features, time]
-#     # we need to add channel for 2D convolution [batch_size, num_features, time, 1]
-#     inputs = tf.expand_dims(inputs, -1)
-
-#     with tf.variable_scope(scope_name) as scope:
-#         # Discriminator would be reused in CycleGAN
-#         if reuse:
-#             scope.reuse_variables()
-#         else:
-#             assert scope.reuse is False
-
-#         h1 = conv2d_layer(inputs = inputs, filters = 128, kernel_size = [3, 3], strides = [1, 2], activation = None, name = 'h1_conv')
-#         h1_gates = conv2d_layer(inputs = inputs, filters = 128, kernel_size = [3, 3], strides = [1, 2], activation = None, name = 'h1_conv_gates')
-#         h1_glu = gated_linear_layer(inputs = h1, gates = h1_gates, name = 'h1_glu')
-
-#         # Downsample
-#         d1 = downsample2d_block(inputs = h1_glu, filters = 256, kernel_size = [3, 3], strides = [2, 2], name_prefix = 'downsample2d_block1_')
-#         d2 = downsample2d_block(inputs = d1, filters = 512, kernel_size = [3, 3], strides = [2, 2], name_prefix = 'downsample2d_block2_')
-#         d3 = downsample2d_block(inputs = d2, filters = 1024, kernel_size = [6, 3], strides = [1, 2], name_prefix = 'downsample2d_block3_')
-
-#         # Output
-        # o1 = tf.layers.dense(inputs = d3, units = 1, activation = tf.nn.sigmoid)
-
-#         return o1
-
-
 
 def generator_gatedcnn(inputs, speaker_id=None,reuse = False, scope_name = 'generator_gatedcnn'):
     #input shape [batchsize, h, w, c]
     #speaker_id [batchsize, one_hot_vector]
-    #其中one_hot_vector如下：[0,1,0,0](四个说话人)
+    #one_hot_vector：[0,1,0,0]
     with tf.variable_scope(scope_name) as scope:
         if reuse:
             scope.reuse_variables()
         else:
             assert scope.reuse is False
-        batchsize = inputs.shape.dims[0].value
+    
         #downsample
         d1 = downsample2d_block(inputs, filters=32, kernel_size=[3,9], strides=[1,1], padding=[1,4],name_prefix='down_1')
         print(f'd1: {d1.shape.as_list()}')
@@ -282,15 +206,9 @@ def generator_gatedcnn(inputs, speaker_id=None,reuse = False, scope_name = 'gene
         d5 = downsample2d_block(d4, filters=5, kernel_size=[9,5], strides=[9,1], padding=[1,2], name_prefix='down_5')
 
         #upsample
-        # 连接speakerid
-        
-        print(speaker_id)
-        # print(f'd5: {d5.shape.as_list()}')
         speaker_id = tf.convert_to_tensor(speaker_id, dtype=tf.float32)
         c_cast = tf.cast(tf.reshape(speaker_id, [-1, 1, 1, speaker_id.shape.dims[-1].value]), tf.float32)
-        # print(f'after cast: {c_cast.shape}')
         c = tf.tile(c_cast, [1, d5.shape.dims[1].value, d5.shape.dims[2].value, 1])
-        # print(f'after tile: {c.shape} {batchsize}')
         print(c.shape.as_list())
         concated = tf.concat([d5, c], axis=-1)
         # print(concated.shape.as_list())
@@ -342,7 +260,6 @@ def discriminator(inputs, speaker_id, reuse = False, scope_name = 'discriminator
 
         concated = tf.concat([inputs, c], axis=-1)
 
-        # 链接id
         # Downsample
         d1 = downsample2d_block(inputs = concated, filters = 32, kernel_size = [3, 9], strides = [1, 1],padding=[1,4] ,name_prefix = 'downsample2d_dis_block1_')
         c1 = tf.tile(c_cast, [1, d1.shape[1], d1.shape[2], 1])
@@ -363,11 +280,6 @@ def discriminator(inputs, speaker_id, reuse = False, scope_name = 'discriminator
         c1 = conv2d_layer(d4_concat, filters=1, kernel_size=[36, 5], strides=[36, 1], padding=[0,1], name='discriminator-last-conv')
         
         c1_red = tf.reduce_mean(c1, keepdims=True)
-        # Output 
-        # s1 = tf.nn.sigmoid(c1_red)
-
-        # o1 = tf.layers.MaxPooling2D([1,64],[1,1], padding='same',name='pool_after_sigmoid')(s1)
-       
 
         return c1_red
 
@@ -379,8 +291,8 @@ def domain_classifier(inputs, reuse = False, scope_name = 'classifier'):
         else:
             assert scope.reuse is False
     
-    # add slice input shape [batchsize, 8, 512, 1]
-    #按照论文中说的取了一个slice
+        #   add slice input shape [batchsize, 8, 512, 1]
+        #get one slice
         one_slice = inputs[:, 0:8, :, :]
 
         d1 = tf.layers.conv2d(one_slice, 8, kernel_size=[4,4],padding='same', name=scope_name+'_conv2d01')
@@ -407,12 +319,9 @@ def domain_classifier(inputs, reuse = False, scope_name = 'classifier'):
         d5_p = tf.layers.max_pooling2d(d5,[1,2],strides=[1,2],name=scope_name+'p5')
         print(f'domain_classifier_d5: {d5.shape}')
         print(f'domain_classifier_d5_p: {d5_p.shape}')
-
-        #TODO 可能loss未下降的原因
-        p = tf.keras.layers.GlobalAveragePooling2D()(d5_p)
-        # p = tf.layers.max_pooling2d(d5_p, [1,16],strides=[1,1],name=scope_name+'p6')
-        # o = tf.nn.softmax(p)
         
+        p = tf.keras.layers.GlobalAveragePooling2D()(d5_p)
+
         o_r = tf.reshape(p, [-1, 1, 1, p.shape.dims[1].value])
         print(f'classifier_output: {o_r.shape}')
 
