@@ -11,7 +11,7 @@ FEATURE_DIM = 36
 SAMPLE_RATE = 16000
 FRAMES = 512
 FFTSIZE = 1024
-SPEAKERS_NUM = 4
+SPEAKERS_NUM = 4 #in our experiment, we use four speakers
 
 EPSILON = 1e-10
 MODEL_NAME = 'starganvc_model'

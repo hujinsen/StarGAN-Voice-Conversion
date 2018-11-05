@@ -8,13 +8,12 @@ import numpy as np
 from preprocess import *
 class StarGANVC(object):
 
-    def __init__(self, num_features, frames=FRAMES, batchsize=1, discriminator = discriminator, generator = generator_gatedcnn, classifier = domain_classifier, mode='train', log_dir='./log'):
+    def __init__(self, num_features, frames=FRAMES, discriminator = discriminator, generator = generator_gatedcnn, classifier = domain_classifier, mode='train', log_dir='./log'):
         super().__init__()
-        self.batchsize = batchsize
         self.num_features = num_features
         
         self.input_shape = [None, num_features, frames, 1]
-        self.label_shape = [None, SPEAKERS_NUM] #四个人
+        self.label_shape = [None, SPEAKERS_NUM] 
 
         self.mode = mode
         self.log_dir = log_dir
@@ -39,17 +38,12 @@ class StarGANVC(object):
 
 
     def build_model(self):
-        
         # Placeholders for real training samples
         self.input_real = tf.placeholder(tf.float32, self.input_shape, name='input_real')
         self.target_real = tf.placeholder(tf.float32, self.input_shape, name='target_real')
 
         self.source_label = tf.placeholder(tf.float32, self.label_shape, name='source_label')
         self.target_label = tf.placeholder(tf.float32, self.label_shape, name='target_label')
-
-        # Placeholders for fake training samples
-        # self.input_fake = tf.placeholder(tf.float32, self.input_shape, name='input_source')
-
 
         self.generated_forward = self.generator(self.input_real, self.target_label,reuse=False, scope_name='generator')
         self.generated_back = self.generator(self.generated_forward, self.source_label, reuse=True, scope_name='generator')
@@ -61,12 +55,11 @@ class StarGANVC(object):
         self.identity_map = self.generator(self.input_real, self.source_label, reuse=True, scope_name='generator')
         self.identity_loss = l1_loss(self.input_real, self.identity_map)
 
-        #need to train 
         self.discrimination_real = self.discriminator(self.target_real, self.target_label, reuse=False,  scope_name='discriminator')
 
         #combine discriminator and generator
         self.discirmination = self.discriminator(self.generated_forward, self.target_label, reuse=True, scope_name='discriminator')
-        # self.generator_loss = l2_loss(tf.ones_like(self.discirmination), self.discirmination)
+        
         self.generator_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(self.discirmination), logits=self.discirmination))
         
         # Discriminator adversial loss
@@ -74,20 +67,20 @@ class StarGANVC(object):
         self.discirmination_fake = self.discriminator(self.generated_forward, self.target_label, reuse=True, scope_name='discriminator')
         
         self.discrimination_real_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(self.discrimination_real),logits=self.discrimination_real))
-        #self.discrimination_real_loss = l2_loss(tf.ones_like(self.discrimination_real), self.discrimination_real)
+        
 
         self.discrimination_fake_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(self.discirmination_fake), logits=self.discirmination_fake))
-        # self.discrimination_fake_loss = l2_loss(tf.zeros_like(self.discirmination_fake), self.discirmination_fake)
+        
         self.discrimator_loss = self.discrimination_fake_loss + self.discrimination_real_loss
 
         #domain classify loss
         
         self.domain_out_real = self.classifier(self.target_real,  reuse=False, scope_name='classifier')
-        # self.gen_domain_out = self.generator(self.input_real, self.target_label, reuse=True, scope_name='generator')
+        
         self.domain_out_fake = self.classifier(self.generated_forward, reuse=True, scope_name='classifier')
         
         #domain_out_xxx [batchsize, 1,1,4], need to convert label[batchsize, 4] to [batchsize, 1,1,4]
-        target_label_reshape = tf.reshape(self.target_label, [self.batchsize, 1,1,SPEAKERS_NUM])
+        target_label_reshape = tf.reshape(self.target_label, [-1, 1,1,SPEAKERS_NUM])
         
         self.domain_fake_loss = cross_entropy_loss(self.domain_out_fake, target_label_reshape)
         self.domain_real_loss = cross_entropy_loss(self.domain_out_real, target_label_reshape)
@@ -152,7 +145,6 @@ class StarGANVC(object):
 
         self.writer.add_summary(discriminator_summaries, self.train_step)
 
-
         domain_classifier_real_loss, _, domain_classifier_summaries = self.sess.run(\
         [self.domain_real_loss, self.classifier_optimizer, self.domain_classifier_summaries],\
         feed_dict={self.input_real: input_source, self.target_label:target_label, self.target_real:input_target, \
@@ -169,20 +161,16 @@ class StarGANVC(object):
             cycle_loss_summary = tf.summary.scalar('cycle_loss', self.cycle_loss)
             identity_loss_summary = tf.summary.scalar('identity_loss', self.identity_loss)
             
-            
             generator_loss_summary = tf.summary.scalar('generator_loss', self.generator_loss)
             generator_summaries = tf.summary.merge([cycle_loss_summary, identity_loss_summary, generator_loss_summary])
 
         with tf.name_scope('discriminator_summaries'):
-            
-            
             discriminator_loss_summary = tf.summary.scalar('discriminator_loss', self.discrimator_loss)
             discriminator_summaries = tf.summary.merge([ discriminator_loss_summary])
 
         with tf.name_scope('domain_classifier_summaries'):
             domain_real_loss = tf.summary.scalar('domain_real_loss', self.domain_real_loss)
             domain_fake_loss = tf.summary.scalar('domain_fake_loss', self.domain_fake_loss)
-
             domain_classifer_summaries = tf.summary.merge([domain_real_loss, domain_fake_loss])
 
         return generator_summaries, discriminator_summaries, domain_classifer_summaries
@@ -193,7 +181,6 @@ class StarGANVC(object):
         return generation
         
     def save(self, directory, filename):
-
         if not os.path.exists(directory):
             os.makedirs(directory)
         self.saver.save(self.sess, os.path.join(directory, filename))
@@ -201,35 +188,8 @@ class StarGANVC(object):
         return os.path.join(directory, filename)
 
     def load(self, filepath):
-
         self.saver.restore(self.sess, filepath)
 
 
 if __name__ == '__main__':
     starganvc = StarGANVC(36)
-
-    # generator_learning_rate = 0.0002
-    # generator_learning_rate_decay = generator_learning_rate / 200000
-    # discriminator_learning_rate = 0.0001
-    # discriminator_learning_rate_decay = discriminator_learning_rate / 200000
-
-    # input_s = np.random.random_integers(0,255, [1, 36,128,1])
-    # input_t = np.random.random_integers(0,255, [1, 36,128,1])
-
-    # label_s = np.zeros([1,4])
-    # for i,v in enumerate(label_s):
-    #     label_s[i][np.random.randint(0,4)] = 1
-    
-    
-
-    # label_t = np.zeros([1,4])
-    # for i,v in enumerate(label_t):
-    #     label_t[i][np.random.randint(0,4)] = 1
-    
-    
-
-    # generator_loss, discriminator_loss, domain_classifier_real_loss \
-    # = starganvc.train(input_s, input_t, label_s, label_t)
-
-    # print(generator_loss, discriminator_loss, domain_classifier_real_loss)
-    

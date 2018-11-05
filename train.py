@@ -26,7 +26,6 @@ def train( processed_dir:str, test_wav_dir: str):
     all_speaker = get_speakers()
     label_enc = LabelEncoder()
     label_enc.fit(all_speaker)
-
     
     lambda_cycle = 10
     lambda_identity = 5
@@ -56,7 +55,7 @@ def train( processed_dir:str, test_wav_dir: str):
 
     #====================create model=============#
     BATCHSIZE = 8
-    model = StarGANVC(num_features=FEATURE_DIM, batchsize=BATCHSIZE, frames=FRAMES)
+    model = StarGANVC(num_features=FEATURE_DIM, frames=FRAMES)
     #====================start train==============#
     EPOCH = 101
     
@@ -102,15 +101,13 @@ def train( processed_dir:str, test_wav_dir: str):
                 #source name
                 speaker_name = one_name.split('-')[0] #SF1
 
-                #[36,512]
+                #shape [36,512]
                 one_file = np.load(one_filename)
                 one_file = normlizer.forward_process(one_file, speaker_name)
                
-                #[36,512,1]
+                #shape [36,512,1]
                 one_file = np.reshape(one_file, [one_file.shape[0], one_file.shape[1], 1])
                 X.append(one_file)
-                      
-                # print(f'speaker_name: {speaker_name} --> {one_target}')
                 
                 #source label
                 temp_index = label_enc.transform([speaker_name])[0]
@@ -164,18 +161,12 @@ def train( processed_dir:str, test_wav_dir: str):
 
             for one_file in tempfiles:
                 _, speaker, name = one_file.rsplit('/', maxsplit=2)
-                # print(speaker, name)
                 wav_, fs = librosa.load(one_file, sr=SAMPLE_RATE, mono=True, dtype=np.float64)
                 wav, pad_length = pad_wav_to_get_fixed_frames(wav_,frames=FRAMES)
 
                 f0, timeaxis = pyworld.harvest(wav, fs, f0_floor = 71.0, f0_ceil = 500.0)               
-                
-                #CheapTrick harmonic spectral envelope estimation algorithm.
                 sp = pyworld.cheaptrick(wav, f0, timeaxis, fs,fft_size=FFTSIZE)
-
-                #D4C aperiodicity estimation algorithm.
                 ap = pyworld.d4c(wav, f0, timeaxis, fs, fft_size=FFTSIZE)
-                #feature reduction
                 coded_sp = pyworld.code_spectral_envelope(sp, fs, FEATURE_DIM)
                 
                 #one audio file to multiple slices(that's one_test_sample),every slice is an input
@@ -183,21 +174,17 @@ def train( processed_dir:str, test_wav_dir: str):
                 csp_transpose = coded_sp.T #36x512 36x128...
                 for i in range(0, csp_transpose.shape[1]-FRAMES+1, FRAMES):
                     t = csp_transpose[:, i:i+FRAMES]
-                    #normalize t
                     t = normlizer.forward_process(t, speaker)
                     t = np.reshape(t, [t.shape[0], t.shape[1], 1])
                     one_test_sample.append(t)
-                # print(f'{len(one_test_sample)} slices appended!')
 
                 #target label 1->2, 2->3, 3->0, 0->1
                 one_test_sample_label = np.zeros([len(one_test_sample), len(all_speaker)])
                 temp_index = label_enc.transform([speaker])[0]
-                
                 temp_index = (temp_index + 2) % len(all_speaker)
-                # generate target label (one-hot vector)
+
                 for i in range(len(one_test_sample)):
                     one_test_sample_label[i][temp_index] = 1
-                # print(one_test_sample_label)
 
                 #get conversion target name ,like SF1
                 target_name = label_enc.inverse_transform([temp_index])[0]
@@ -207,7 +194,6 @@ def train( processed_dir:str, test_wav_dir: str):
                 reshpaped_res = []
                 for one in generated_results:
                     t = np.reshape(one, [one.shape[0], one.shape[1]])
-                    #denormalized
                     t = normlizer.backward_process(t, target_name)
                     
                     reshpaped_res.append(t)
@@ -215,29 +201,21 @@ def train( processed_dir:str, test_wav_dir: str):
                 c = []
                 for one_slice in reshpaped_res:
                     one_slice = np.ascontiguousarray(one_slice.T, dtype=np.float64)
-
-                    # one_slice = one_slice * coded_sps_std + coded_sps_mean
-
-                    # print(f'one_slice : {one_slice.shape}')
                     decoded_sp = pyworld.decode_spectral_envelope(one_slice, SAMPLE_RATE, fft_size=FFTSIZE)
-                    # print(f'decoded_sp shape: {decoded_sp.shape}')
                     c.append(decoded_sp)
 
                 concated = np.concatenate((c), axis=0)
-                # print(f'concated shape: {concated.shape}')
 
                 #f0 convert 
                 f0 = normlizer.pitch_conversion(f0, speaker, target_name)
                 
                 synwav = pyworld.synthesize(f0, concated, ap, fs)
-                # print(f'origin wav:{len(wav_)} paded wav:{len(wav)} synthesize wav:{len(synwav)}')
 
                 #remove synthesized wav paded length
                 synwav = synwav[:-pad_length]
 
                 #save synthesized wav to file
                 wavname = f'{speaker}-{target_name}+{name}'
-                # wavpath = f'{file_path}/wavs'
                 wavpath = os.path.join(file_path, 'wavs')
                 if not os.path.exists(wavpath):
                     os.makedirs(wavpath, exist_ok=True)
@@ -262,7 +240,6 @@ def train( processed_dir:str, test_wav_dir: str):
         time_elapsed_epoch = end_time_epoch - start_time_epoch
 
         print('Time Elapsed for This Epoch: %02d:%02d:%02d' % (time_elapsed_epoch // 3600, (time_elapsed_epoch % 3600 // 60), (time_elapsed_epoch % 60 // 1)))
-
 
 
 if __name__ == '__main__':
