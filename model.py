@@ -17,7 +17,6 @@ class StarGANVC(object):
                  classifier=domain_classifier,
                  mode='train',
                  log_dir='./log'):
-        super().__init__()
         self.num_features = num_features
 
         self.input_shape = [None, num_features, frames, 1]
