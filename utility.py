@@ -2,7 +2,7 @@ import numpy as np
 import pyworld as pw
 # import soundfile as sf
 import tensorflow as tf
-import os,shutil
+import os, shutil
 import glob
 
 
@@ -12,7 +12,7 @@ def get_speakers(trainset: str = './data/fourspeakers'):
     '''
     p = os.path.join(trainset, "*")
     all_sub_folder = glob.glob(p)
-        
+
     all_speaker = [s.rsplit('/', maxsplit=1)[1] for s in all_sub_folder]
 
     return all_speaker
@@ -20,8 +20,9 @@ def get_speakers(trainset: str = './data/fourspeakers'):
 
 class Normalizer(object):
     '''Normalizer: convience method for fetch normalize instance'''
-    def __init__(self, statfolderpath: str='./etc'):
-        
+
+    def __init__(self, statfolderpath: str = './etc'):
+
         self.all_speaker = get_speakers()
         self.folderpath = statfolderpath
 
@@ -30,8 +31,8 @@ class Normalizer(object):
     def forward_process(self, x, speakername):
         mean = self.norm_dict[speakername]['coded_sps_mean']
         std = self.norm_dict[speakername]['coded_sps_std']
-        mean = np.reshape(mean, [-1,1])
-        std = np.reshape(std, [-1,1])
+        mean = np.reshape(mean, [-1, 1])
+        std = np.reshape(std, [-1, 1])
         x = (x - mean) / std
 
         return x
@@ -39,8 +40,8 @@ class Normalizer(object):
     def backward_process(self, x, speakername):
         mean = self.norm_dict[speakername]['coded_sps_mean']
         std = self.norm_dict[speakername]['coded_sps_std']
-        mean = np.reshape(mean, [-1,1])
-        std = np.reshape(std, [-1,1])
+        mean = np.reshape(mean, [-1, 1])
+        std = np.reshape(std, [-1, 1])
         x = x * std + mean
 
         return x
@@ -60,14 +61,14 @@ class Normalizer(object):
             t = np.load(stat_filepath)
             d_temp = t.f.arr_0.item()
             # print(d_temp.keys())
-            
+
             d[one_speaker] = d_temp
 
         return d
-    
+
     def pitch_conversion(self, f0, source_speaker, target_speaker):
         '''Logarithm Gaussian normalization for Pitch Conversions'''
-        
+
         mean_log_src = self.norm_dict[source_speaker]['log_f0s_mean']
         std_log_src = self.norm_dict[source_speaker]['log_f0s_std']
 
@@ -77,11 +78,13 @@ class Normalizer(object):
         f0_converted = np.exp((np.ma.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
 
         return f0_converted
-    
+
+
 class GenerateStatics(object):
-    def __init__(self, folder: str ='./data/processed'):
+
+    def __init__(self, folder: str = './data/processed'):
         self.folder = folder
-       
+
         self.all_speaker = get_speakers()
 
         #key is speaker(SF1, SF2...) and value is corresponding file list
@@ -108,9 +111,9 @@ class GenerateStatics(object):
     @staticmethod
     def coded_sp_statistics(coded_sps):
         # sp shape (T, D)
-        coded_sps_concatenated = np.concatenate(coded_sps, axis = 1)
-        coded_sps_mean = np.mean(coded_sps_concatenated, axis = 1, keepdims = False)
-        coded_sps_std = np.std(coded_sps_concatenated, axis = 1, keepdims = False)
+        coded_sps_concatenated = np.concatenate(coded_sps, axis=1)
+        coded_sps_mean = np.mean(coded_sps_concatenated, axis=1, keepdims=False)
+        coded_sps_std = np.std(coded_sps_concatenated, axis=1, keepdims=False)
         return coded_sps_mean, coded_sps_std
 
     @staticmethod
@@ -129,11 +132,11 @@ class GenerateStatics(object):
          '''
         etc_path = os.path.join(os.path.realpath('.'), statfolder)
         if not os.path.exists(etc_path):
-                os.makedirs(etc_path, exist_ok=True)
-        
+            os.makedirs(etc_path, exist_ok=True)
+
         for one_speaker in self.include_dict.keys():
             coded_sps = []
-            
+
             arr = self.include_dict[one_speaker]
             if len(arr) == 0:
                 continue
@@ -144,31 +147,27 @@ class GenerateStatics(object):
 
             coded_sps_mean, coded_sps_std = self.coded_sp_statistics(coded_sps)
             # print(f'sp_mean: {coded_sps_mean.shape} \
-                    # sp_std: {coded_sps_std.shape}')
+            # sp_std: {coded_sps_std.shape}')
 
-            f0s = []            
+            f0s = []
             arr01 = self.include_dict_npz[one_speaker]
             if len(arr01) == 0:
                 continue
             for one_file in arr01:
                 t = np.load(os.path.join(self.folder, one_file))
-                d =  t.f.arr_0.item()
-                f0_ = np.reshape(d['f0'], [-1,1])
+                d = t.f.arr_0.item()
+                f0_ = np.reshape(d['f0'], [-1, 1])
                 # print(f'f0 shape: {f0_.shape}')
                 f0s.append(f0_)
             log_f0s_mean, log_f0s_std = self.logf0_statistics(f0s)
             print(log_f0s_mean, log_f0s_std)
 
-            tempdict = {
-                'log_f0s_mean':log_f0s_mean,
-                'log_f0s_std':log_f0s_std,
-                'coded_sps_mean':coded_sps_mean,
-                'coded_sps_std':coded_sps_std
-            }
-        
+            tempdict = {'log_f0s_mean': log_f0s_mean, 'log_f0s_std': log_f0s_std, 'coded_sps_mean': coded_sps_mean, 'coded_sps_std': coded_sps_std}
+
             filename = os.path.join(etc_path, f'{one_speaker}-stats.npz')
             print(f'save: {filename}')
             np.savez(filename, tempdict)
+
 
 if __name__ == "__main__":
     pass
