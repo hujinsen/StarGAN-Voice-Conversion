@@ -35,7 +35,7 @@ def train(processed_dir: str, test_wav_dir: str):
 
     generator_learning_rate = 0.0002
     generator_learning_rate_decay = generator_learning_rate / 20000
-    discriminator_learning_rate = 0.0001
+    discriminator_learning_rate = 0.0002
     discriminator_learning_rate_decay = discriminator_learning_rate / 20000
     domain_classifier_learning_rate = 0.0001
     domain_classifier_learning_rate_decay = domain_classifier_learning_rate / 20000
@@ -70,12 +70,25 @@ def train(processed_dir: str, test_wav_dir: str):
         for i in range(num_samples // BATCHSIZE):
             num_iterations = num_samples // BATCHSIZE * epoch + i
 
-            if num_iterations > 10000:
-                lambda_identity = 0
-            if num_iterations > 10000:
+            if num_iterations > 2500:
+                
+                domain_classifier_learning_rate = max(0, domain_classifier_learning_rate - domain_classifier_learning_rate_decay)
                 generator_learning_rate = max(0, generator_learning_rate - generator_learning_rate_decay)
                 discriminator_learning_rate = max(0, discriminator_learning_rate - discriminator_learning_rate_decay)
-                domain_classifier_learning_rate = max(0, domain_classifier_learning_rate - domain_classifier_learning_rate_decay)
+
+            if discriminator_learning_rate == 0 or generator_learning_rate == 0:
+                print('Early stop training.')
+                break
+            # if num_iterations > 2500:
+            #     lambda_identity = 1
+            #     domain_classifier_learning_rate = 0
+            #     generator_learning_rate = max(0, generator_learning_rate - generator_learning_rate_decay)
+            #     discriminator_learning_rate = discriminator_learning_rate + discriminator_learning_rate_decay
+
+            # if generator_learning_rate <= 0.0001:
+            #     generator_learning_rate = 0.0001
+            # if discriminator_learning_rate >= 0.0002:
+            #     discriminator_learning_rate = 0.0002
 
             start = i * BATCHSIZE
             end = (i + 1) * BATCHSIZE
