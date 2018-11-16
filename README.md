@@ -103,7 +103,7 @@ The network structure shown as follows:
 
 
 
-**Note: Our implementation follows the original paper’s network structure**, while [pytorch StarGAN-VC code](https://github.com/liusongxiang/StarGAN-Voice-Conversion)‘network is different from the paper as it’s classifier shares the Discriminator’s weights. Boths ways generate good converted speeches.
+**Note: Our implementation follows the original paper’s network structure**, while [pytorch StarGAN-VC code](https://github.com/liusongxiang/StarGAN-Voice-Conversion)‘network is different from the paper as it’s classifier shares the Discriminator’s weights. Both ways generate good converted speeches.
 
 ## Reference
 
