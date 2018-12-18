@@ -7,13 +7,13 @@ This is a tensorflow implementation of the paper: [StarGAN-VC: Non-parallel many
 ## Dependencies
 
 - Python 3.6 (or higher)
-- tensorflow 1.7
+- tensorflow 1.8
 - librosa 
 - pyworld 
 - tensorboard
 - scikit-learn
 
-
+> NOTE:According to some feedbacks, we recommend to use tensorflow version 1.8  exactly. (Tensorflow 1.11 generate nonsense results)
 
 ## Usage
 
