@@ -2,6 +2,8 @@
 
 This is a tensorflow implementation of the paper: [StarGAN-VC: Non-parallel many-to-many voice conversion with star generative adversarial networks](https://arxiv.org/abs/1806.02169).
 
+
+
 **The converted voice examples are in *converted* directory**
 
 ## Dependencies
@@ -109,7 +111,7 @@ The network structure shown as follows:
 
 [CycleGAN-VC code](https://github.com/leimao/Voice_Converter_CycleGAN)
 
-[pytorch StarGAN-VC code](https://github.com/liusongxiang/StarGAN-Voice-Conversion)
+[pytorch StarGAN-VC code](https://github.com/hujinsen/pytorch-StarGAN-VC)
 
 [StarGAN code](https://github.com/taki0112/StarGAN-Tensorflow)
 
