@@ -12,13 +12,14 @@ class StarGANVC(object):
     def __init__(self,
                  num_features,
                  frames=FRAMES,
+                 batchsize=8,
                  discriminator=discriminator,
                  generator=generator_gatedcnn,
                  classifier=domain_classifier,
                  mode='train',
                  log_dir='./log'):
         self.num_features = num_features
-
+        self.batchsize = batchsize
         self.input_shape = [None, num_features, frames, 1]
         self.label_shape = [None, SPEAKERS_NUM]
 
@@ -78,7 +79,15 @@ class StarGANVC(object):
         self.discrimination_fake_loss = tf.reduce_mean(
             tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(self.discirmination_fake), logits=self.discirmination_fake))
 
-        self.discrimator_loss = self.discrimination_fake_loss + self.discrimination_real_loss
+        # calculate `x_hat`
+        epsilon = tf.random_uniform((self.batchsize, 1, 1, 1), 0.0, 1.0)
+        x_hat = epsilon * self.generated_forward + (1.0 - epsilon) * self.input_real
+
+        # gradient penalty
+        gradients = tf.gradients(self.discriminator(x_hat, self.target_label, reuse=True, scope_name='discriminator'), [x_hat])
+        _gradient_penalty = 10.0 * tf.square(tf.norm(gradients[0], ord=2) - 1.0)
+
+        self.discrimator_loss = self.discrimination_fake_loss + self.discrimination_real_loss + _gradient_penalty
 
         #domain classify loss
 
@@ -87,7 +96,7 @@ class StarGANVC(object):
         self.domain_out_fake = self.classifier(self.generated_forward, reuse=True, scope_name='classifier')
 
         #domain_out_xxx [batchsize, 1,1,4], need to convert label[batchsize, 4] to [batchsize, 1,1,4]
-        target_label_reshape = tf.reshape(self.target_label, [-1, 1, 1, SPEAKERS_NUM])
+        target_label_reshape = tf.reshape(self.target_label, [self.batchsize, 1, 1, SPEAKERS_NUM])
 
         self.domain_fake_loss = cross_entropy_loss(self.domain_out_fake, target_label_reshape)
         self.domain_real_loss = cross_entropy_loss(self.domain_out_real, target_label_reshape)

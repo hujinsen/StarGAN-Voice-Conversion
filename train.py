@@ -57,7 +57,7 @@ def train(processed_dir: str, test_wav_dir: str):
 
     #====================create model=============#
     BATCHSIZE = 8
-    model = StarGANVC(num_features=FEATURE_DIM, frames=FRAMES)
+    model = StarGANVC(num_features=FEATURE_DIM, frames=FRAMES, batchsize=BATCHSIZE)
     #====================start train==============#
     EPOCH = 101
 
