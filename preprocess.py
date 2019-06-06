@@ -110,7 +110,7 @@ def cal_mcep(wav_ori, fs=SAMPLE_RATE, ispad=False, frame_period=0.005, dim=FEATU
     else:
         wav = wav_ori
     #Harvest F0 extraction algorithm.
-    f0, timeaxis = pyworld.harvest(wav, fs, f0_ceil=500.0)
+    f0, timeaxis = pyworld.harvest(wav, fs)
 
     #CheapTrick harmonic spectral envelope estimation algorithm.
     sp = pyworld.cheaptrick(wav, f0, timeaxis, fs, fft_size=fft_size)
