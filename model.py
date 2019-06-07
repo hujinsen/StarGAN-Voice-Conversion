@@ -19,8 +19,8 @@ class StarGANVC(object):
                  log_dir='./log'):
         self.num_features = num_features
         self.batchsize = batchsize
-        self.input_shape = [self.batchsize, num_features, frames, 1]
-        self.label_shape = [self.batchsize, SPEAKERS_NUM]
+        self.input_shape = [None, num_features, frames, 1]
+        self.label_shape = [None, SPEAKERS_NUM]
 
         self.mode = mode
         self.log_dir = log_dir
@@ -50,7 +50,7 @@ class StarGANVC(object):
         self.source_label = tf.placeholder(tf.float32, self.label_shape, name='source_label')
         self.target_label = tf.placeholder(tf.float32, self.label_shape, name='target_label')
         
-        self.target_label_reshaped = tf.placeholder(tf.float32, [self.batchsize, 1, 1, SPEAKERS_NUM], name='reshaped_label_for_classifier')
+        self.target_label_reshaped = tf.placeholder(tf.float32, [None, 1, 1, SPEAKERS_NUM], name='reshaped_label_for_classifier')
         
         self.generated_forward = self.generator(self.input_real, self.target_label, reuse=False, scope_name='generator')
         self.generated_back = self.generator(self.generated_forward, self.source_label, reuse=True, scope_name='generator')
@@ -103,7 +103,7 @@ class StarGANVC(object):
 
         self.domain_out_fake = self.classifier(self.generated_forward, reuse=True, scope_name='classifier')
         self.domain_fake_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.target_label_reshaped, logits=self.domain_out_fake))
-        self.discrimator_loss = self.discrimination_fake_loss + self.discrimination_real_loss + 10*_gradient_penalty + self.domain_fake_loss
+        self.discrimator_loss = self.discrimination_fake_loss + self.discrimination_real_loss + _gradient_penalty + self.domain_fake_loss
 
 
         #================================================================================

@@ -33,9 +33,9 @@ def train(processed_dir: str, test_wav_dir: str):
     lambda_identity = 5
     lambda_classifier = 3
 
-    generator_learning_rate = 0.0002
+    generator_learning_rate = 0.0001
     generator_learning_rate_decay = generator_learning_rate / 20000
-    discriminator_learning_rate = 0.0002
+    discriminator_learning_rate = 0.0001
     discriminator_learning_rate_decay = discriminator_learning_rate / 20000
     domain_classifier_learning_rate = 0.0001
     domain_classifier_learning_rate_decay = domain_classifier_learning_rate / 20000
@@ -56,10 +56,10 @@ def train(processed_dir: str, test_wav_dir: str):
     print('Loading Data Done.')
 
     #====================create model=============#
-    BATCHSIZE = 8
+    BATCHSIZE = 1
     model = StarGANVC(num_features=FEATURE_DIM, frames=FRAMES, batchsize=BATCHSIZE)
     #====================start train==============#
-    EPOCH = 101
+    EPOCH = 1001
 
     num_samples = len(files)
     for epoch in range(EPOCH):
@@ -70,7 +70,7 @@ def train(processed_dir: str, test_wav_dir: str):
         for i in range(num_samples // BATCHSIZE):
             num_iterations = num_samples // BATCHSIZE * epoch + i
 
-            if num_iterations > 2500:
+            if num_iterations > 100000:
                 
                 domain_classifier_learning_rate = max(0, domain_classifier_learning_rate - domain_classifier_learning_rate_decay)
                 generator_learning_rate = max(0, generator_learning_rate - generator_learning_rate_decay)
@@ -158,9 +158,9 @@ def train(processed_dir: str, test_wav_dir: str):
             lambda_classifier=lambda_classifier
             )
 
-            print('Iteration: {:07d}, Generator Learning Rate: {:.7f}, Discriminator Learning Rate: {:.7f},Generator Loss : {:.3f}, Discriminator Loss : {:.3f}, domain_classifier_loss: {:.3f}'\
-            .format(num_iterations, generator_learning_rate, discriminator_learning_rate, generator_loss, \
-            discriminator_loss, domain_classifier_loss))
+            if num_iterations % 10 == 0:
+                print('Iteration: {:07d},Generator Loss : {:.3f}, Discriminator Loss : {:.3f}, domain_classifier_loss: {:.3f}'\
+                .format(num_iterations, generator_loss, discriminator_loss, domain_classifier_loss))
 
         #=======================test model==========================
 
@@ -183,7 +183,7 @@ def train(processed_dir: str, test_wav_dir: str):
                 wav_, fs = librosa.load(one_file, sr=SAMPLE_RATE, mono=True, dtype=np.float64)
                 wav, pad_length = pad_wav_to_get_fixed_frames(wav_, frames=FRAMES)
 
-                f0, timeaxis = pyworld.harvest(wav, fs, f0_floor=71.0, f0_ceil=500.0)
+                f0, timeaxis = pyworld.harvest(wav, fs)
                 sp = pyworld.cheaptrick(wav, f0, timeaxis, fs, fft_size=FFTSIZE)
                 ap = pyworld.d4c(wav, f0, timeaxis, fs, fft_size=FFTSIZE)
                 coded_sp = pyworld.code_spectral_envelope(sp, fs, FEATURE_DIM)
