@@ -32,7 +32,7 @@ class StarGANVC(object):
         self.build_model()
 
         self.saver = tf.train.Saver()
-        self.sess = tf.Session()
+        self.sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
         self.sess.run(tf.global_variables_initializer())
 
         if self.mode == 'train':

@@ -62,13 +62,13 @@ def train(processed_dir: str, test_wav_dir: str):
     EPOCH = 201
 
     num_samples = len(files)
-    for epoch in range(EPOCH):
+    for epoch in range(1, EPOCH+1, 1):
         start_time_epoch = time.time()
 
         files_shuffled, names_shuffled = shuffle(files, names)
 
         for i in range(num_samples // BATCHSIZE):
-            num_iterations = num_samples // BATCHSIZE * epoch + i
+            num_iterations = num_samples // BATCHSIZE * (epoch-1) + i
 
             if num_iterations > 100000:
                 domain_classifier_learning_rate = max(0, domain_classifier_learning_rate - domain_classifier_learning_rate_decay)
@@ -153,12 +153,11 @@ def train(processed_dir: str, test_wav_dir: str):
 
         #=======================test model==========================
 
-        if epoch % 10 == 0 and epoch != 0:
+        file_path = os.path.join('out/', f'{epoch}_{timestr}')
+        if epoch % 10 == 0:
             print('============test model============')
             #out put path
-            file_path = os.path.join('./out', f'{epoch}_{timestr}')
-            if not os.path.exists(file_path):
-                os.makedirs(file_path)
+            os.makedirs(file_path, exist_ok=True)                
 
             tempfiles = []
             for one_speaker in all_speaker:
@@ -203,7 +202,6 @@ def train(processed_dir: str, test_wav_dir: str):
                 for one in generated_results:
                     t = np.reshape(one, [one.shape[0], one.shape[1]])
                     t = normlizer.backward_process(t, target_name)
-
                     reshpaped_res.append(t)
                 #collect the generated slices, and concate the array to be a whole representation of the whole audio
                 c = []
@@ -216,9 +214,7 @@ def train(processed_dir: str, test_wav_dir: str):
 
                 #f0 convert
                 f0 = normlizer.pitch_conversion(f0, speaker, target_name)
-
                 synwav = pyworld.synthesize(f0, concated, ap, fs)
-
                 #remove synthesized wav paded length
                 synwav = synwav[:-pad_length]
 
@@ -228,26 +224,21 @@ def train(processed_dir: str, test_wav_dir: str):
                 if not os.path.exists(wavpath):
                     os.makedirs(wavpath, exist_ok=True)
                 librosa.output.write_wav(f'{wavpath}/{wavname}', synwav, sr=fs)
-                print('============save converted audio============')
+                print(f'[save]:{wavpath}/{wavname}')
 
             print('============test finished!============')
 
-        #====================save model=======================
-
-        if epoch % 10 == 0 and epoch != 0:
+        if epoch % 10 == 0:
             print('============save model============')
             model_path = os.path.join(file_path, 'model')
-
-            if not os.path.exists(model_path):
-                os.makedirs(model_path, exist_ok=True)
-
-            print(f'save model: {model_path}')
+            os.makedirs(model_path, exist_ok=True)
+            print(f'[save]: {model_path}')
             model.save(directory=model_path, filename=MODEL_NAME)
 
         end_time_epoch = time.time()
         time_elapsed_epoch = end_time_epoch - start_time_epoch
 
-        print('Time Elapsed for This Epoch: %02d:%02d:%02d' % (time_elapsed_epoch // 3600, (time_elapsed_epoch % 3600 // 60),
+        print('Time Elapsed for Epoch %d: %02d:%02d:%02d' % (epoch, time_elapsed_epoch // 3600, (time_elapsed_epoch % 3600 // 60),
                                                                (time_elapsed_epoch % 60 // 1)))
 
 
