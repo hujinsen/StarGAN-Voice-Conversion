@@ -59,7 +59,7 @@ def train(processed_dir: str, test_wav_dir: str):
     BATCHSIZE = 1
     model = StarGANVC(num_features=FEATURE_DIM, frames=FRAMES, batchsize=BATCHSIZE)
     #====================start train==============#
-    EPOCH = 1001
+    EPOCH = 201
 
     num_samples = len(files)
     for epoch in range(EPOCH):
@@ -71,7 +71,6 @@ def train(processed_dir: str, test_wav_dir: str):
             num_iterations = num_samples // BATCHSIZE * epoch + i
 
             if num_iterations > 100000:
-                
                 domain_classifier_learning_rate = max(0, domain_classifier_learning_rate - domain_classifier_learning_rate_decay)
                 generator_learning_rate = max(0, generator_learning_rate - generator_learning_rate_decay)
                 discriminator_learning_rate = max(0, discriminator_learning_rate - discriminator_learning_rate_decay)
@@ -79,16 +78,6 @@ def train(processed_dir: str, test_wav_dir: str):
             if discriminator_learning_rate == 0 or generator_learning_rate == 0:
                 print('Early stop training.')
                 break
-            # if num_iterations > 2500:
-            #     lambda_identity = 1
-            #     domain_classifier_learning_rate = 0
-            #     generator_learning_rate = max(0, generator_learning_rate - generator_learning_rate_decay)
-            #     discriminator_learning_rate = discriminator_learning_rate + discriminator_learning_rate_decay
-
-            # if generator_learning_rate <= 0.0001:
-            #     generator_learning_rate = 0.0001
-            # if discriminator_learning_rate >= 0.0002:
-            #     discriminator_learning_rate = 0.0002
 
             start = i * BATCHSIZE
             end = (i + 1) * BATCHSIZE
