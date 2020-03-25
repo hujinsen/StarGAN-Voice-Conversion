@@ -1,10 +1,12 @@
 import os
 import random
-from urllib.request import urlretrieve
 import zipfile
 import argparse
-import shlex, subprocess
 import zipfile
+import urllib.request as req
+import ssl
+from threading import Thread
+from queue import SimpleQueue as Queue
 
 
 def unzip(zip_filepath, dest_dir='./data'):
@@ -21,25 +23,40 @@ def download_vcc2016():
         print("File already exists!")
         return
 
-    trainset = f'{datalink}/{data_files[0]}'
-    evalset = f'{datalink}/{data_files[1]}'
-
-    train_comm = f'wget {trainset}'
-    eval_comm = f'wget {evalset}'
-
-    train_comm = shlex.split(train_comm)
-    eval_comm = shlex.split(eval_comm)
+    trainset = f'{datalink}{data_files[0]}'
+    evalset = f'{datalink}{data_files[1]}'
 
     print('Start download dataset...')
 
-    subprocess.run(train_comm)
-    subprocess.run(eval_comm)
+    th = Thread(target=download_file, args=[trainset])
+    th.start()
+    download_file(evalset)
+    th.join()
 
     unzip(data_files[0])
     unzip(data_files[1])
 
     print('Finish download dataset...')
 
+def download_file(url: str, out_path: str = None, buffer_size: int = 10*(1024**2)):
+    data = Queue()
+    def _download():
+        b = data.get()
+        with open(out_path or url.split('/')[-1], 'wb') as o:
+            while b:
+                o.write(b)
+                b = data.get()
+    
+    s = ssl.SSLContext()
+    f = req.urlopen(url, context=s)
+    th = Thread(target=_download)
+    th.start()
+    b = f.read(buffer_size)
+    while b:
+        data.put(b)
+        b = f.read(buffer_size)
+    data.put([])
+    th.join()
 
 def create_dirs(trainset: str = './data/fourspeakers', testset: str = './data/fourspeakers_test'):
     '''create train test dirs'''
