@@ -26,7 +26,7 @@ def conversion(model_dir, test_dir, output_dir, source, target):
     normlizer = Normalizer()
 
     for one_file in tempfiles:
-        _, speaker, name = one_file.rsplit('/', maxsplit=2)
+        _, speaker, name = os.path.normpath(one_file).rsplit(os.sep, maxsplit=2)
         # print(speaker, name)
         wav_, fs = librosa.load(one_file, sr=SAMPLE_RATE, mono=True, dtype=np.float64)
         wav, pad_length = pad_wav_to_get_fixed_frames(wav_, frames=FRAMES)
