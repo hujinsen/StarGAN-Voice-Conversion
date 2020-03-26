@@ -15,7 +15,7 @@ def get_files_labels(pattern: str):
     files = glob.glob(pattern)
     names = []
     for f in files:
-        t = f.rsplit('/', maxsplit=1)[1]  #'./data/processed/SF2-100008_11.npy'
+        t = os.path.normpath(f).rsplit(os.sep, maxsplit=1)[1]  #'./data/processed/SF2-100008_11.npy'
         name = t.rsplit('.', maxsplit=1)[0]
         names.append(name)
 
@@ -99,7 +99,7 @@ def train(processed_dir: str, test_wav_dir: str):
             for one_filename, one_name, one_target in zip(files_shuffled[start:end], names_shuffled[start:end], pre_targets):
 
                 #target name
-                t = one_target.rsplit('/', maxsplit=1)[1]  #'./data/processed/SF2-100008_11.npy'
+                t = os.path.normpath(one_target).rsplit(os.sep, maxsplit=1)[1]  #'./data/processed/SF2-100008_11.npy'
                 target_speaker_name = t.rsplit('.', maxsplit=1)[0].split('-')[0]
 
                 #source name
@@ -167,7 +167,7 @@ def train(processed_dir: str, test_wav_dir: str):
                 tempfiles.append(wavs[1])  #'./data/fourspeakers_test/200006.wav'
 
             for one_file in tempfiles:
-                _, speaker, name = one_file.rsplit('/', maxsplit=2)
+                _, speaker, name = os.path.normpath(one_file).rsplit(os.sep, maxsplit=2)
                 wav_, fs = librosa.load(one_file, sr=SAMPLE_RATE, mono=True, dtype=np.float64)
                 wav, pad_length = pad_wav_to_get_fixed_frames(wav_, frames=FRAMES)
 

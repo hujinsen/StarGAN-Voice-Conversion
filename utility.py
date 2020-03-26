@@ -13,7 +13,7 @@ def get_speakers(trainset: str = './data/fourspeakers'):
     p = os.path.join(trainset, "*")
     all_sub_folder = glob.glob(p)
 
-    all_speaker = [s.rsplit('/', maxsplit=1)[1] for s in all_sub_folder]
+    all_speaker = [os.path.normpaths(s).rsplit(os.sep, maxsplit=1)[1] for s in all_sub_folder]
 
     return all_speaker
 
