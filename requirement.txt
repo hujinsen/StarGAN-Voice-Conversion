@@ -1,0 +1,7 @@
+tensorflow==1.8
+librosa
+SoundFile
+pyworld
+tensorboard
+scikit-learn
+numpy==1.16.2
