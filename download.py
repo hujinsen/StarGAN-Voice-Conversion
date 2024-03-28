@@ -6,7 +6,9 @@ import zipfile
 import urllib.request as req
 import ssl
 from threading import Thread
-from queue import SimpleQueue as Queue
+from multiprocessing import SimpleQueue as Queue
+#from multiprocessingSimpleQueue import SimpleQueue as Queue
+#from queue import SimpleQueue as Queue
 
 
 def unzip(zip_filepath, dest_dir='./data'):

@@ -9,7 +9,7 @@ from model import *
 from sklearn.utils import shuffle
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from utility import *
-
+import soundfile as sf  #new line added
 
 def get_files_labels(pattern: str):
     files = glob.glob(pattern)
@@ -223,7 +223,8 @@ def train(processed_dir: str, test_wav_dir: str):
                 wavpath = os.path.join(file_path, 'wavs')
                 if not os.path.exists(wavpath):
                     os.makedirs(wavpath, exist_ok=True)
-                librosa.output.write_wav(f'{wavpath}/{wavname}', synwav, sr=fs)
+                #librosa.output.write_wav(f'{wavpath}/{wavname}', synwav, sr=fs)
+                 sf.write(f'{wavpath}/{wavname}', synwav, samplerate=fs) #new line added
                 print(f'[save]:{wavpath}/{wavname}')
 
             print('============test finished!============')
